@@ -1,0 +1,7 @@
+# Core dependencies
+requests>=2.31.0
+tqdm>=4.66.1
+beautifulsoup4>=4.12.2
+lxml>=5.0.0          # required by BeautifulSoup's "xml" parser for EPUB OPF files
+ebooklib>=0.18
+pypdf>=4.0.0         # successor to the unmaintained PyPDF2
