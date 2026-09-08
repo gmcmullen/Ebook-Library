@@ -44,6 +44,7 @@ Output lands in `<your-books>/Library/`:
 | `--refetch-metadata` | Re-look-up metadata for every book |
 | `--recat`, `-r` | Recompute categories offline from stored subjects |
 | `--fix-authors` | Canonicalise author names and report ones needing review |
+| `--prune-covers` | Delete cover images no book refers to any more |
 | `--write-metadata` | Write canonical authors into the EPUBs and fix misspelled filenames |
 | `--dry-run` | With `--write-metadata`, show every change without making it |
 | `--covers-only` | Refetch covers for every book |

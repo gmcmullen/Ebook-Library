@@ -1,4 +1,5 @@
 """Scan a directory of ebooks and keep the catalogue up to date."""
+import unicodedata
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
@@ -513,6 +514,68 @@ class BookScanner:
             )
             for relative, meta, from_file, reason in declined:
                 logger.info(f"    {from_file!r} vs metadata {meta!r} — {reason}")
+
+    def prune_covers(self, dry_run: bool = False) -> None:
+        """Delete cover images no book in the catalogue refers to.
+
+        Renaming and re-tagging books changes the filenames covers are stored
+        under, so old images accumulate. Names are compared in NFC: macOS stores
+        filenames decomposed, and comparing raw strings would treat an accented
+        name's real file as unreferenced and delete a cover still in use.
+        """
+        image_exts = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
+
+        on_disk: Dict[str, Path] = {}
+        for path in self.config.covers_dir.iterdir():
+            if path.is_file() and path.suffix.lower() in image_exts:
+                on_disk.setdefault(unicodedata.normalize('NFC', path.name), path)
+
+        referenced = {
+            unicodedata.normalize('NFC', Path(book['cover_url']).name)
+            for book in self.catalog.values()
+            if book.get('cover_url') and not book['cover_url'].startswith('http')
+        }
+
+        # A reference with no file means the catalogue is inconsistent; deleting
+        # anything in that state risks removing art that is about to be re-linked.
+        dangling = referenced - set(on_disk)
+        if dangling:
+            logger.error(
+                f"{Colors.RED}{len(dangling)} covers are referenced but missing; "
+                f"run --update before pruning.{Colors.ENDC}"
+            )
+            for name in sorted(dangling):
+                logger.error(f"    {name}")
+            return
+
+        orphans = sorted(set(on_disk) - referenced)
+        if not orphans:
+            logger.info(f"{Colors.GREEN}No unused cover images{Colors.ENDC}")
+            return
+
+        freed = sum(on_disk[name].stat().st_size for name in orphans)
+        prefix = "[dry run] " if dry_run else ""
+        logger.info(
+            f"{Colors.BLUE}{prefix}Removing {len(orphans)} unused covers "
+            f"({freed / 1048576:.1f} MB){Colors.ENDC}"
+        )
+
+        removed = 0
+        for name in orphans:
+            logger.debug(f"{prefix}delete {name}")
+            if dry_run:
+                removed += 1
+                continue
+            try:
+                on_disk[name].unlink()
+                removed += 1
+            except OSError as e:
+                logger.warning(f"{Colors.YELLOW}Could not delete {name}: {e}{Colors.ENDC}")
+
+        logger.info(
+            f"{Colors.GREEN}{prefix}Deleted {removed} cover images, "
+            f"freeing {freed / 1048576:.1f} MB{Colors.ENDC}"
+        )
 
     def write_html(self) -> Path:
         return generate_html(self.catalog, self.config)

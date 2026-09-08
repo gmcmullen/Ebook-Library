@@ -1,0 +1,6 @@
+/__pycache__
+scanbooks.log
+/tests
+/ebooklibrary/__pycache__
+ebooklibrary/__init__.py
+libraryscan.log

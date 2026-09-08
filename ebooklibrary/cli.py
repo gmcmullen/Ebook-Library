@@ -41,11 +41,13 @@ def build_parser() -> argparse.ArgumentParser:
                            'fix misspelled filenames (modifies your books)')
     mode.add_argument('--fix-authors', action='store_true',
                       help='Canonicalise author names and report ones needing review')
+    mode.add_argument('--prune-covers', action='store_true',
+                      help='Delete cover images no book refers to any more')
     mode.add_argument('--stats', action='store_true',
                       help='Report catalogue coverage and exit')
 
     parser.add_argument('--dry-run', action='store_true',
-                        help='With --write-metadata, show changes without making them')
+                        help='With --write-metadata or --prune-covers, show changes without making them')
     parser.add_argument('--offline', action='store_true',
                         help='Skip all network lookups')
     parser.add_argument('--workers', type=int, default=None,
@@ -90,6 +92,8 @@ def main(argv=None) -> int:
             scanner.write_metadata(dry_run=args.dry_run)
         elif args.fix_authors:
             scanner.fix_authors()
+        elif args.prune_covers:
+            scanner.prune_covers(dry_run=args.dry_run)
         elif args.covers_only:
             scanner.update_covers(missing_only=False)
         elif args.missing_covers_only:
