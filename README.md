@@ -4,8 +4,7 @@ Scans a directory of ebooks, enriches each one with metadata and cover art from
 public APIs, sorts them into bookstore-style categories, and publishes a
 searchable HTML catalogue.
 
-**This code was written with AI assistance and should be audited before you rely
-on it for anything important.**
+**This code was written by AI and should be audited by a human if you plan to use it for anything important (or at all).**
 
 ## Install
 
